@@ -1,0 +1,1 @@
+Sample project for the first week of [Fractal bootcamp](https://github.com/fractal-bootcamp)

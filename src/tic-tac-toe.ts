@@ -19,13 +19,7 @@ export type GameState = {
 
 export type CellIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 6 | 7 | 8;
 
-export function createGame(): GameState {
-  return {
-    board: [null, null, null, null, null, null, null, null, null],
-    currentPlayer: "X",
-    winner: null,
-  };
-}
+export type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
 export const winLines: [number, number, number][] = [
   [0, 1, 2],
@@ -38,6 +32,16 @@ export const winLines: [number, number, number][] = [
   [2, 4, 6],
 ];
 
+export type GameStates = Map<UUID, GameState>;
+
+export function createGameBoard(): GameState {
+  return {
+    board: [null, null, null, null, null, null, null, null, null],
+    currentPlayer: "X",
+    winner: null,
+  };
+}
+
 export function getWinner(board: Board): Player | null {
   for (const [a, b, c] of winLines) {
     let potentialWinner = board[a];
@@ -49,8 +53,14 @@ export function getWinner(board: Board): Player | null {
   return null;
 }
 
-export function makeMove(state: GameState, position: CellIndex): GameState {
-  if (getWinner(state) !== null) {
+export function makeMove(
+  states: GameStates,
+  board_id: UUID,
+  position: CellIndex,
+): GameState {
+  const state = states.get(board_id);
+
+  if (getWinner(state?.board) !== null) {
     throw new Error("Game is already over");
   }
   if (!Number.isInteger(position)) {
@@ -62,7 +72,7 @@ export function makeMove(state: GameState, position: CellIndex): GameState {
   if (position > 8 || position < 0) {
     throw new Error("Position must be between 0 and 8");
   }
-  if (state.board[position] !== null) {
+  if (state?.board[position] !== null) {
     throw new Error("Position is already occupied");
   }
 
@@ -78,9 +88,11 @@ export function makeMove(state: GameState, position: CellIndex): GameState {
     nextPlayer = "X";
   }
 
-  return {
+  const updatedGameState: GameState = {
     board: newBoard,
     currentPlayer: nextPlayer,
     winner: newWinner,
   };
+
+  return updatedGameState;
 }

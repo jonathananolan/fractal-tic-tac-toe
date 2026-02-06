@@ -32,7 +32,7 @@ app.ws("/ws/:board_id", (ws, req) => {
 
   ws.on("close", () => {
     const connection = webSocketUsers.get(board_id);
-    connections.delete(board_id);
+    connections.delete(ws);
     console.log("removed from websocket");
   });
 });
@@ -79,10 +79,30 @@ app.post("/api/createNewGame", (req, res) => {
   res.json(gamestate);
 });
 
-const PORT = 3005;
+const PORT = parseInt(process.env.PORT || "3005");
+const isProduction = process.env.NODE_ENV === "production";
 
-viteExpress.listen(app, PORT, () => {
-  console.log(`Server is listening on port ${PORT}...`);
-});
+if (isProduction) {
+  // In production, serve the built React app
+  app.use(express.static("dist"));
+
+  // Handle client-side routing - serve index.html for all non-API routes
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/ws")) {
+      next();
+    } else {
+      res.sendFile("index.html", { root: "dist" });
+    }
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT} in production mode...`);
+  });
+} else {
+  // In development, use vite-express
+  viteExpress.listen(app, PORT, () => {
+    console.log(`Server is listening on port ${PORT} in development mode...`);
+  });
+}
 
 export default app;

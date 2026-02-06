@@ -15,7 +15,9 @@ export function CurrentGame(props: CurrentGameProps) {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    wsRef.current = new WebSocket(`ws://localhost:3005/ws/${props.board_id}`);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = window.location.host;
+    wsRef.current = new WebSocket(`${protocol}//${host}/ws/${props.board_id}`);
 
     wsRef.current.onmessage = (event) => {
       const newBoard = JSON.parse(event.data);

@@ -66,7 +66,11 @@ export function makeMove(
 ): GameState {
   const state = states.get(board_id);
 
-  if (getWinner(state?.board) !== null) {
+  if (!state) {
+    throw new Error("Game not found");
+  }
+
+  if (getWinner(state.board) !== null) {
     throw new Error("Game is already over");
   }
   if (!Number.isInteger(position)) {

@@ -1,5 +1,5 @@
 import { type CellIndex, type GameState, type UUID } from "../tic-tac-toe";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { IndividualCell } from "./individualCell";
 ``;
 
@@ -8,9 +8,27 @@ interface CurrentGameProps {
   currentGameState: GameState;
   onMove: (index: CellIndex) => Promise<GameState>;
   enterLobby: () => void;
+  setCurrentGameState: (gameState: GameState) => void;
 }
 
 export function CurrentGame(props: CurrentGameProps) {
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    wsRef.current = new WebSocket(`ws://localhost:3005/ws/${props.board_id}`);
+
+    wsRef.current.onmessage = (event) => {
+      const newBoard = JSON.parse(event.data);
+      console.log(newBoard);
+
+      props.setCurrentGameState(newBoard);
+    };
+
+    wsRef.current.onopen = () => {
+      console.log("connected!");
+    };
+  }, [props.board_id]);
+
   function WinnerDisplay(props: { currentGameState: GameState }) {
     if (props.currentGameState.winner !== null) {
       return <h1>{props.currentGameState.winner} Wins!!!!</h1>;

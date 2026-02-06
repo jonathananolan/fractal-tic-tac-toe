@@ -8,12 +8,34 @@ import {
 } from "./src/tic-tac-toe.ts";
 
 const app = express();
+var expressWs = require("express-ws")(app);
 
 app.use(express.json());
 
 export const gameStates = new Map<UUID, GameState>([
   [crypto.randomUUID(), createGameBoard()],
 ]);
+
+const webSocketUsers = new Map<UUID, Set<WebSocket>>();
+
+app.ws("/ws/:board_id", (ws, req) => {
+  const { board_id } = req.params;
+  ws.send(JSON.stringify(gameStates.get(board_id)));
+
+  //create a new empty set for the board id if it's not already there
+  let connections = webSocketUsers.get(board_id);
+  if (!connections) {
+    connections = new Set();
+    webSocketUsers.set(board_id, connections);
+  }
+  connections.add(ws);
+
+  ws.on("close", () => {
+    const connection = webSocketUsers.get(board_id);
+    connections.delete(board_id);
+    console.log("removed from websocket");
+  });
+});
 
 app.get("/api/games", (req, res) => {
   const gamesList = Array.from(gameStates.keys());
@@ -26,6 +48,14 @@ app.post("/api/games/:board_id/move", (req, res) => {
   const updatedBoardState = makeMove(gameStates, board_id, index);
   gameStates.set(board_id, updatedBoardState);
   const UpdatedGameState = { id: board_id, ...updatedBoardState };
+
+  const boardUsers = webSocketUsers.get(board_id);
+
+  boardUsers?.forEach((ws) => {
+    ws.send(JSON.stringify(UpdatedGameState));
+    console.log(`sent updated game state to ${ws}`);
+  });
+
   res.json(UpdatedGameState);
 });
 

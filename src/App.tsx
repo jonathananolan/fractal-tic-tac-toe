@@ -79,6 +79,7 @@ function App() {
       currentGameState={currentGameState}
       onMove={(index) => makeMove(currentBoardID, index)}
       enterLobby={() => enterLobby()}
+      setCurrentGameState={(gameState) => setCurrentGameState(gameState)}
     />
   ) : (
     <Lobby
